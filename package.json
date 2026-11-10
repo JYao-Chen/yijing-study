@@ -1,0 +1,19 @@
+{
+  "name": "yijing-study",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py && next build --webpack",
+    "start": "next start -H ${HOST:-127.0.0.1} -p ${PORT:-18500}",
+    "dev": "python3 build.py && next dev --webpack -H 127.0.0.1 -p 18501",
+    "test:api": "node --test tests/api.test.mjs"
+  },
+  "dependencies": {
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}

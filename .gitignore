@@ -1,0 +1,8 @@
+build/
+__pycache__/
+node_modules/
+.next/
+.env*
+.verify/
+!.env.example
+*.local.md
