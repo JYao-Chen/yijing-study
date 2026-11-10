@@ -708,7 +708,7 @@ views.tui = function () {
   var t = c.t || nowBJ(), inp = $('#tt');
   function p2(n) { return String(n).padStart(2, '0'); }
   inp.value = t[0] + '-' + p2(t[1]) + '-' + p2(t[2]) + 'T' + p2(t[3]) + ':' + p2(t[4] || 0);
-  $('#tq').oninput = function (e) { tui.q = e.target.value; tuiCompute(false); qaSchedule(); };
+  $('#tq').oninput = function (e) { tui.q = e.target.value; tuiCompute(false); qaReset(); };
   $('#ty').onchange = function (e) { tui.yong = e.target.value; tuiCompute(true); };
   inp.oninput = function () { tuiCompute(true); };
   $('#tpv').onclick = function () { tuiStop(); tuiGo(tui.step - 1); };
@@ -786,7 +786,7 @@ function tuiAI() {
   if (!window.fetch || location.protocol === 'file:') return;
   fetch('api/health').then(function (r) { return r.ok ? r.json() : null; }).then(function (h) {
     if (!h || !h.llm || !h.llm.configured || !$('#tai')) return;
-    $('#tai').hidden = false; tui.llm = true; tuiCompute(false); qaSchedule(true);
+    $('#tai').hidden = false; tui.llm = true; tuiCompute(false); qaReset();
     $('#tst').textContent = '模型 ' + h.llm.model + ' · 今日已用 ¥' + h.llm.spentToday + (h.llm.dailyBudget > 0 ? ' / ¥' + h.llm.dailyBudget : '');
     $('#tgo').onclick = function () {
       var m = $('#tt').value.match(/(\d+)-(\d+)-(\d+)T(\d+):(\d+)/), b = $('#tgo'), mode = $('#tmd').value;
@@ -824,16 +824,15 @@ function tuiPicked() {
   return a ? { yong: a.yong, yongBy: 'wenshi', yongReason: a.reason, yongConfidence: a.confidence } : {};
 }
 
-// ---- 问题解析：停笔即调用问事官，候选用神随思考实时变化 ----
+// ---- 问题解析：点按钮调用问事官，候选用神随思考实时变化 ----
 var QY = ['父母', '兄弟', '子孙', '妻财', '官鬼', '世', '应'];
 var QTERM = { 父母: /父母|parent/gi, 兄弟: /兄弟|sibling|brother/gi, 子孙: /子孙|offspring|descendant|medicine/gi, 妻财: /妻财|wealth|wife/gi, 官鬼: /官鬼|official|career/gi, 世: /世爻|取世|自占|self line/gi, 应: /应爻|取应|other party/gi };
-var qa = { timer: null, ctl: null, raf: 0 };
-function qaAbort() { clearTimeout(qa.timer); qa.timer = null; if (qa.ctl) { qa.ctl.abort(); qa.ctl = null; } cancelAnimationFrame(qa.raf); qa.raf = 0; }
+var qa = { ctl: null, raf: 0 };
+function qaAbort() { if (qa.ctl) { qa.ctl.abort(); qa.ctl = null; } cancelAnimationFrame(qa.raf); qa.raf = 0; }
 function qaShell() {
   var box = $('#tqa'); if (!box) return null;
   if (!box.firstChild) {
-    box.innerHTML = '<div class="qhd"><span class="atag">问</span><b>问题解析</b><span class="small" id="qst"></span><button class="btn ghost" id="qgo">立即解析</button></div>' +
-      '<div class="qdeb" hidden><i></i></div>' +
+    box.innerHTML = '<div class="qhd"><span class="atag">问</span><b>问题解析</b><span class="small" id="qst"></span><button class="btn" id="qgo">解析问题</button></div>' +
       '<div class="cands">' + QY.map(function (y) { return '<div class="cand" data-y="' + y + '"><span>' + y + '</span><i class="cbar"><b></b></i><em></em></div>'; }).join('') + '</div>' +
       '<div class="qthink small" hidden></div><div class="qres"></div>';
     $('#qgo').onclick = function () { qaRun(); };
@@ -857,19 +856,18 @@ function qaWeigh(text, kw) {
   if (kw) w[kw] += 0.3; // 关键词初判留一点底分，思考刚开始时也有倾向
   return w;
 }
-function qaSchedule(now) {
+// 问题改动后只更新关键词初判、取消进行中的解析；交给问事官要用户点按钮
+function qaReset() {
   if (!tui.llm) return;
   var q = tui.q.trim(), box = qaShell(); if (!box) return;
+  $('#qgo').disabled = q.length < 2;
   if (tuiAiYong()) return;
   var kw = YiInfer.classify(q).yong, w = {};
   qaAbort(); box.classList.remove('busy');
   $('.qthink', box).hidden = true; $('.qres', box).innerHTML = '';
-  if (q.length < 4) { qaCands(kw, {}, null); $('#qst').textContent = '写下问题，停笔后问事官自动取用神'; $('.qdeb', box).hidden = true; return; }
+  if (q.length < 2) { qaCands(kw, {}, null); $('#qst').textContent = '写好问题后点“解析问题”，问事官来取用神'; return; }
   w[kw] = 1; qaCands(kw, w, null);
-  if (now) return qaRun();
-  $('#qst').textContent = '关键词初判 ' + kw + ' · 停笔 1 秒后交给问事官';
-  var d = $('.qdeb', box); d.hidden = false; d.firstChild.style.animation = 'none'; void d.offsetWidth; d.firstChild.style.animation = '';
-  qa.timer = setTimeout(qaRun, 1000);
+  $('#qst').textContent = '关键词初判 ' + kw + ' · 写好后点“解析问题”交给问事官';
 }
 function qaRun() {
   var q = tui.q.trim(), box = qaShell(); if (!box || q.length < 2) return;
@@ -877,7 +875,7 @@ function qaRun() {
   var kw = YiInfer.classify(q).yong, ctl = window.AbortController ? new AbortController() : {}, t0 = Date.now(), first = 0, think = '', out = '', lock = null, done = false;
   qa.ctl = ctl;
   var st = $('#qst'), th = $('.qthink', box), res = $('.qres', box);
-  $('.qdeb', box).hidden = true; th.hidden = true; th.textContent = ''; res.innerHTML = ''; box.classList.add('busy');
+  th.hidden = true; th.textContent = ''; res.innerHTML = ''; box.classList.add('busy');
   function sec() { return ((Date.now() - t0) / 1000).toFixed(1); }
   function status() { st.textContent = !first ? '问事官已接到问题 · 等模型首字 ' + sec() + ' 秒' : lock ? '已定用神 ' + lock + ' · 正在写理由 · ' + sec() + ' 秒' : '问事官思考中 · ' + think.length + ' 字 · ' + sec() + ' 秒'; }
   var tick = setInterval(function () { if (done || qa.ctl !== ctl) return clearInterval(tick); status(); }, 200);

@@ -33,7 +33,7 @@ This project splits the work:
 | 🧮 **Verifiable rules** | 594 chart checks against the open-source [najia](https://pypi.org/project/najia/) library with 0 differences; all 296 charts printed in *Zengshan Buyi* reproduced line by line |
 | 📜 **Every step sourced** | ~40 rules, each with chapter and original text, shown as the replay advances |
 | 🤖 **Multi-agent + tools** | Intake → rule engine → Yehe diviner → (Fu Peirong text reader) → auditor → narrator |
-| 🎯 **Parses as you type** | A second after you stop typing, the intake agent starts picking the relevant line. Seven candidate bars rise and fall with the model's reasoning, lock when it answers, and the replay switches to that line; the full run reuses it |
+| 🎯 **Live question parsing** | Click "parse" and the intake agent starts picking the relevant line. Seven candidate bars rise and fall with the model's reasoning, lock when it answers, and the replay switches to that line; the full run reuses it |
 | ⚡ **Fully live** | Pipeline progress, time to first token per request, streaming reasoning, every tool call with arguments and result, each audit check, live tokens and cost |
 | 🔌 **Bring your own model** | Any OpenAI-compatible endpoint (DeepSeek, Qwen, GLM, local vLLM…); a full compare run on deepseek-v4.1-flash costs about ¥0.01 |
 | 🎓 **Beginner friendly** | Six interactive levels — yin/yang, trigrams, line positions, reading the texts, casting, interpreting — plus Plum Blossom (梅花易数), Najia charting, a hexagram dictionary and drills |
@@ -50,7 +50,7 @@ This project splits the work:
 <td><img src="docs/images/l6.png" alt="Reading"><br><sub><b>Reading</b>: toggle moving lines; Zhu Xi's rules pick which text to read</sub></td>
 </tr>
 <tr>
-<td><img src="docs/images/parse.png" alt="Question parsing"><br><sub><b>Question parsing</b>: starts when you stop typing; candidate lines rise and fall with the model's reasoning</sub></td>
+<td><img src="docs/images/parse.png" alt="Question parsing"><br><sub><b>Question parsing</b>: click to start; candidate lines rise and fall with the model's reasoning</sub></td>
 <td><img src="docs/images/parse-done.png" alt="Parsing done"><br><sub><b>Parsed</b>: locked line, confidence and reason; the replay switches to it</sub></td>
 </tr>
 </table>

@@ -10,8 +10,14 @@ with sync_playwright() as p:
         pg = b.new_page(viewport=vp, color_scheme="dark" if dark else "light")
         pg.on("pageerror", lambda e: errs.append((name, str(e))))
         pg.goto(base + "#tui"); pg.wait_for_selector("#tai:not([hidden])", timeout=8000)
+        # 打开页面不应自动解析预填的问题
+        pg.wait_for_timeout(1800)
+        if "完成" in pg.inner_text("#qst") or pg.query_selector("#tqa .cand.lock"): errs.append((name, "auto-parse-on-load"))
         pg.fill("#tq", "这个月能收回欠款吗"); pg.select_option("#tmd", "compare")
-        # 问题解析：停笔后自动调用问事官，锁定一个候选并写出理由，回放随之改用该用神
+        # 问题解析只在点按钮后调用：输入后等一会儿不应自动开始
+        pg.wait_for_timeout(1800)
+        if pg.query_selector("#tqa.busy") or pg.query_selector("#tqa .cand.lock"): errs.append((name, "auto-parse-on-input"))
+        pg.click("#qgo")
         pg.wait_for_selector("#tqa .cand.lock", timeout=10000)
         pg.wait_for_function("document.querySelector('#qst').textContent.startsWith('完成')", timeout=10000)
         if pg.eval_on_selector_all("#tqa .cand", "e => e.length") != 7: errs.append((name, "cands"))

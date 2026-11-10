@@ -234,10 +234,8 @@ details{border-top:1px solid var(--line);padding-top:8px}summary{cursor:pointer;
 /* 问题解析 */
 .qa{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--paper);display:grid;gap:8px;min-width:0}
 .qa.busy{border-color:var(--accent)}
-.qhd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}.qhd #qst{flex:1;min-width:12em}.qhd .btn{padding:3px 12px;font-size:13px}
+.qhd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}.qhd #qst{flex:1;min-width:12em}.qhd .btn{padding:4px 14px;font-size:14px}
 .qhd .atag{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--on);font:700 14px var(--serif)}
-.qdeb{height:3px;background:var(--well);border-radius:2px;overflow:hidden}.qdeb i{display:block;height:100%;background:var(--accent);transform-origin:left;animation:qdeb 1s linear forwards}
-@keyframes qdeb{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .cands{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
 .cand{position:relative;border:1px solid var(--line);border-radius:6px;padding:4px 8px 6px;background:var(--card);transition:border-color .3s,opacity .3s,transform .3s,background .3s}
 .cand span{font:700 15px var(--serif)}.cand em{position:absolute;right:6px;top:6px;font:400 11px var(--sans);font-style:normal;color:var(--muted)}
@@ -249,4 +247,4 @@ details{border-top:1px solid var(--line);padding-top:8px}summary{cursor:pointer;
 .qa.busy .qthink::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:2px;animation:pulse 1s infinite}
 .qreason{line-height:1.6}.caret{display:inline-block;width:2px;height:1em;background:var(--accent);vertical-align:-2px;margin-left:2px;animation:pulse .8s infinite}
 .qclar{color:var(--move)}
-@media (prefers-reduced-motion:reduce){.qdeb i,.caret,.qa.busy .qthink::before{animation:none}.cand,.cbar b{transition:none}}
+@media (prefers-reduced-motion:reduce){.caret,.qa.busy .qthink::before{animation:none}.cand,.cbar b{transition:none}}
