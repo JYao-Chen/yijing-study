@@ -35,7 +35,7 @@ This project splits the work:
 | 🤖 **Multi-agent + tools** | Intake → rule engine → Yehe diviner → (Fu Peirong text reader) → auditor → narrator |
 | 🎯 **Live question parsing** | Click "parse" and the intake agent starts picking the relevant line. Seven candidate bars rise and fall with the model's reasoning, lock when it answers, and the replay switches to that line; the full run reuses it |
 | ⚡ **Fully live** | Pipeline progress, time to first token per request, streaming reasoning, every tool call with arguments and result, each audit check, live tokens and cost |
-| 🔌 **Bring your own model** | Any OpenAI-compatible endpoint (DeepSeek, Qwen, GLM, local vLLM…); a full compare run on deepseek-v4.1-flash costs about ¥0.01 |
+| 🔌 **Bring your own model** | Any OpenAI-compatible endpoint (DeepSeek, Qwen, GLM, local vLLM…) |
 | 🎓 **Beginner friendly** | Six interactive levels — yin/yang, trigrams, line positions, reading the texts, casting, interpreting — plus Plum Blossom (梅花易数), Najia charting, a hexagram dictionary and drills |
 
 ## Screenshots
@@ -59,7 +59,7 @@ The UI is in Chinese.
 
 ## How faithful are the rules?
 
-This measures **agreement with the author's own judgments in the book**, not whether divination predicts anything.
+The measure is **agreement with the author's own judgments in the book**.
 
 The engine runs on the 187 cases in *Zengshan Buyi* that give a full month and day, with 0 errors. Timing hits are reported separately for volume 1 (used while designing the rules) and volumes 2–4 (held out):
 
@@ -68,11 +68,9 @@ The engine runs on the 187 cases in *Zengshan Buyi* that give a full month and d
 | Vol. 1 (used for design) | 8 / 9 | 4.4 | 43% |
 | **Vols. 2–4 (held out)** | **29 / 50 = 58%** | 3.7 | 37% |
 
-Most held-out misses come from rules not yet implemented (three-harmony frames, hour-based weather rules). Contributions welcome.
-
 ### Picking the relevant line: keyword table vs LLM
 
-68 questions in `data/yong_eval.json` (rewritten from the book's chapter on the relevant line, original case questions, and modern colloquial ones), run on deepseek-v4.1-flash:
+68 questions in `data/yong_eval.json` (rewritten from the book's chapter on the relevant line, original case questions, and modern colloquial ones), evaluated with deepseek-v4.1-flash:
 
 | Method | Chapter | Book cases | Colloquial | Total |
 |---|---|---|---|---|
@@ -80,7 +78,7 @@ Most held-out misses come from rules not yet implemented (three-harmony frames, 
 | LLM given the keyword guess | 100% | 90% | 97% | 97% |
 | **LLM on its own (current)** | 100% | 90% | 100% | **99%** |
 
-The keyword guess misled the model, so the intake agent now decides alone; the table is only an offline first guess. 272 calls cost ¥0.32 (`scripts/eval_yong.mjs`).
+The keyword guess misled the model, so the intake agent decides alone; the table serves as an offline first guess (`scripts/eval_yong.mjs`).
 
 ## Architecture
 
@@ -115,7 +113,7 @@ cp .env.example .env.local   # set LLM_BASE_URL / LLM_API_KEY / LLM_MODEL
 npm start                    # http://127.0.0.1:18500
 ```
 
-Without a model everything except the multi-agent panel still works, since the learning levels, charts and replay run in the browser. Set `LLM_MOCK=1` to try the whole pipeline for free.
+The learning levels, charts and replay run in the browser without a model; the multi-agent panel needs one. Set `LLM_MOCK=1` to run the whole pipeline on a mock model.
 
 | Variable | Meaning |
 |---|---|
