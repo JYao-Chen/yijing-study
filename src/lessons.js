@@ -1187,17 +1187,22 @@ var Lessons = (function () {
       {
         title: '入门阶段小结与下一步去向',
         render: function () {
-          return '<p>走完这 7 门课，你已经拥有了独立翻开《周易》的整套工具箱：认八卦不再靠死背，画六十四卦不会上下颠倒，分得清经文和十翼，也能用当位/得中/正应分析一爻为什么吉或凶。</p>' +
+          return '<p>走完 00~06 这 7 门基础课，你已经拥有了独立翻开《周易》的工具箱：认八卦不再靠死背，画六十四卦不会上下颠倒，分得清经文和十翼，也能用当位、得中、正应分析一爻的真实处境。</p>' +
             '<div class="chain">' +
-            '<a class="cnode" href="#drill" style="text-decoration:none;color:inherit"><b>分级练习</b><span class="small">用 1~4 阶微题把符号、数理与爻位变成肌肉记忆</span></a>' +
-            '<a class="cnode" href="#l5" style="text-decoration:none;color:inherit"><b>实战起卦</b><span class="small">先过“三不占”体检，再体验大衍蓍草或数字卦</span></a>' +
-            '<a class="cnode" href="#l6" style="text-decoration:none;color:inherit"><b>变爻解卦</b><span class="small">看懂“动爻变什么、该读哪一句”与真实古今案例</span></a>' +
-            '<a class="cnode" href="#dict" style="text-decoration:none;color:inherit"><b>卦典查阅</b><span class="small">随时检索 64 卦原文与笔记，记录自己的读卦体会</span></a></div>';
+            '<a class="cnode" href="#c7" style="text-decoration:none;color:inherit"><b>继续精读（第 07 课）</b><span class="small">精读乾、坤、谦等代表卦与《系辞》哲学</span></a>' +
+            '<a class="cnode" href="#drill" style="text-decoration:none;color:inherit"><b>分级练习</b><span class="small">用 1~5 阶微题把符号、数理与爻位变成肌肉记忆</span></a>' +
+            '<a class="cnode" href="#l5" style="text-decoration:none;color:inherit"><b>实战起卦与解卦</b><span class="small">守住“三不占”，体会大衍/数字卦与同爻异境</span></a>' +
+            '<a class="cnode" href="#qa" style="text-decoration:none;color:inherit"><b>初学十二问</b><span class="small">把读经和占卦最绕的思辨问题一次讲透</span></a></div>';
         },
         mount: function (box, ctx) { ctx.markStepDone('c6', 3); }
       }
     ]
   };
+
+  function register(metaList, stepsMap) {
+    (metaList || []).forEach(function (m) { LIST.push(m); });
+    Object.keys(stepsMap || {}).forEach(function (k) { DATA_LESSONS[k] = stepsMap[k]; });
+  }
 
   function render(id, hostEl, ctx) {
     var meta = LIST.filter(function (x) { return x.id === id; })[0];
@@ -1240,7 +1245,7 @@ var Lessons = (function () {
         st.render(ctx) +
         '</section>';
 
-      var nextLabel = cur < steps.length - 1 ? '下一步 →' : (nextMeta ? '完成本课，进入第 ' + nextMeta.tag + ' 课 →' : '完成入门七课，去分级练习 →');
+      var nextLabel = cur < steps.length - 1 ? '下一步 →' : (nextMeta ? '完成本课，进入第 ' + nextMeta.tag + ' 课 →' : '完成全部课程，去分级练习 →');
       var navHtml = '<div class="step-nav">' +
         '<button type="button" class="btn ghost" id="lprev"' + (cur === 0 ? ' disabled' : '') + '>← 上一步</button>' +
         '<span class="small">第 ' + (cur + 1) + ' / ' + steps.length + ' 步</span>' +
@@ -1308,5 +1313,5 @@ var Lessons = (function () {
     if (typeof Glossary !== 'undefined') Glossary.bind(hostEl);
   }
 
-  return { LIST: LIST, CORE_KW: CORE_KW, TRI_INFO: TRI_INFO, KOUJUE: KOUJUE, render: render };
+  return { LIST: LIST, CORE_KW: CORE_KW, TRI_INFO: TRI_INFO, KOUJUE: KOUJUE, T: T, safeStep: safeStep, register: register, render: render };
 })();

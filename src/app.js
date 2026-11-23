@@ -10,13 +10,14 @@ var view = $('#view');
 var POS = ['初', '二', '三', '四', '五', '上'];
 var PRAC = [{ id: 'l5', tag: '起', nm: '起卦实操' }, { id: 'l6', tag: '解', nm: '变爻解卦' }];
 var ADV = [{ id: 'mh', tag: '梅', nm: '梅花易数' }, { id: 'nj', tag: '纳', nm: '纳甲六爻' }, { id: 'tui', tag: '推', nm: '六爻推演' }];
-var TOOLS = [{ id: 'dict', tag: '典', nm: '卦典与笔记' }, { id: 'drill', tag: '练', nm: '分级练习' }];
+var TOOLS = [{ id: 'dict', tag: '典', nm: '卦典与笔记' }, { id: 'drill', tag: '练', nm: '分级练习' }, { id: 'qa', tag: '问', nm: '初学十二问' }];
 var DEMO = { values: [7, 9, 8, 8, 7, 8], q: '这辆车可以买吗？（示例：节卦九二）', method: '数字卦', demo: true, t: [2026, 11, 9, 10] };
 
 // ---- 状态：登录时存账号（跨设备），否则存本机 ----
 var S = {
   learned: {}, notes: {}, box: {}, cast: null, history: [],
   levels: {}, learnMode: 'guided', lessonStep: {}, stepDone: {}, drillTier: null,
+  castLogs: {},
   updatedAt: 0
 };
 var dbRef = null, saveTimer = null;
@@ -28,6 +29,7 @@ function normalizeState() {
   S.levels = S.levels || {};
   S.lessonStep = S.lessonStep || {};
   S.stepDone = S.stepDone || {};
+  S.castLogs = S.castLogs || {};
   if (S.learnMode !== 'overview') S.learnMode = 'guided';
 }
 function save() {
@@ -84,8 +86,8 @@ function finishBtn(id) { var d = S.levels[id]; return '<div class="row"><button 
 function bindFinish() { $$('[data-finish]').forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-finish'); S.levels[id] = !S.levels[id]; save(); route(); }; }); }
 function fuZhu(b) { var n = FU_NOTES[Yi.hex(b).kw]; return n && n.zhu != null ? n.zhu : Yi.rareLine(b); }
 function recommendedTier() {
-  var all7 = Lessons.LIST.every(function (l) { return S.levels[l.id]; });
-  if (all7 || (S.levels.c6 && (S.levels.l5 || S.levels.l6))) return 5;
+  var base7 = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6'].every(function (id) { return S.levels[id]; });
+  if (base7 || (S.levels.c6 && (S.levels.l5 || S.levels.l6))) return 5;
   if (S.levels.c5 || S.levels.c6) return 4;
   if (S.levels.c3) return 3;
   if (S.levels.c1) return 2;
@@ -98,10 +100,11 @@ views.home = function () {
   var d = new Date(), seed = d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate();
   var today = HEX[seed % 64], g = GLOSS[today.kw - 1];
   var doneHex = Object.keys(S.learned).length;
+  var totalLessons = Lessons.LIST.length;
   var doneLessons = Lessons.LIST.filter(function (l) { return S.levels[l.id]; }).length;
   var nextLesson = Lessons.LIST.filter(function (l) { return !S.levels[l.id]; })[0] || null;
   var ctaHref = nextLesson ? ('#' + nextLesson.id) : '#l5';
-  var ctaText = doneLessons === 0 ? '从第 0 课开始（破冰）' : (nextLesson ? ('继续：第 ' + nextLesson.tag + ' 课 · ' + nextLesson.short) : '入门课已完 · 去实战起卦');
+  var ctaText = doneLessons === 0 ? '从第 0 课开始（破冰）' : (nextLesson ? ('继续：第 ' + nextLesson.tag + ' 课 · ' + nextLesson.short) : '全套微课已完 · 去实战起卦');
   var recTier = recommendedTier();
 
   function cardHTML(l, isNext) {
@@ -113,6 +116,7 @@ views.home = function () {
   }
   var s1 = Lessons.LIST.filter(function (l) { return l.stage === 1; });
   var s2 = Lessons.LIST.filter(function (l) { return l.stage === 2; });
+  var s3 = Lessons.LIST.filter(function (l) { return l.stage === 3; });
 
   var dailySection = '';
   if (S.levels.c3) {
@@ -141,25 +145,27 @@ views.home = function () {
     '<section class="hero">' +
       '<div class="surface block">' +
         '<span class="chip on" style="align-self:flex-start">零基础交互学习 · 闯关 / 全览双模式</span>' +
-        '<div class="row" style="justify-content:space-between;align-items:baseline"><b>入门进度</b><span class="small">' + doneLessons + ' / 7 课</span></div>' +
-        '<div class="pbar"><i style="width:' + Math.round(doneLessons / 7 * 100) + '%"></i></div>' +
-        '<div class="small" style="line-height:1.7">先破除算命迷思与“一字一义”，用<b>以少为主</b>推出八卦，再靠<b>听名画卦</b>和<b>四把尺子</b>读懂一整卦。全部讲解与微练都在浏览器里直接动手完成。</div>' +
+        '<div class="row" style="justify-content:space-between;align-items:baseline"><b>课程总进度</b><span class="small">' + doneLessons + ' / ' + totalLessons + ' 课</span></div>' +
+        '<div class="pbar"><i style="width:' + Math.round(doneLessons / totalLessons * 100) + '%"></i></div>' +
+        '<div class="small" style="line-height:1.7">先破除算命迷思与“一字一义”，掌握画卦与读辞尺子，再精读乾坤谦与四大难卦、建立生活化的哲思坐标。全部微课都在浏览器里直接动手完成。</div>' +
       '</div>' +
       '<div class="block">' +
         '<h1>从一根阴阳线，读懂整本《易经》</h1>' +
-        '<p class="lede">七门微课由浅入深：先过符号关，再学读经文、看爻位，最后结合生活做理性起卦与解卦。支持“一步步闯关”与“整课展开全览”。</p>' +
+        '<p class="lede">' + totalLessons + ' 门微课由浅入深：前 7 课过符号与读经关，后 4 课精读代表卦与《系辞》哲学，配套情境解卦工坊与初学十二问。</p>' +
         '<div class="row"><a class="btn" href="' + ctaHref + '" style="text-decoration:none">' + ctaText + '</a>' +
         '<a class="btn ghost" href="#drill" style="text-decoration:none">分级练习（推荐第 ' + recTier + ' 阶）</a>' +
-        '<a class="btn ghost" href="#l5" style="text-decoration:none">直接起一卦</a></div>' +
-        '<div class="row small"><span>' + doneLessons + ' / 7 门课完成</span><span>已解锁第 ' + recTier + ' 阶练习</span><span>' + doneHex + ' / 64 卦已学</span></div>' +
+        '<a class="btn ghost" href="#qa" style="text-decoration:none">初学十二问</a></div>' +
+        '<div class="row small"><span>' + doneLessons + ' / ' + totalLessons + ' 门课完成</span><span>已解锁第 ' + recTier + ' 阶练习</span><span>' + doneHex + ' / 64 卦已学</span></div>' +
       '</div>' +
     '</section>' +
-    '<section class="block">' + head('学习路线图', '从 00 到 06 循序渐进；带✓代表已学完') +
+    '<section class="block">' + head('学习路线图', '从 00 到 10 循序渐进；带✓代表已学完') +
       '<div class="block"><h3>阶段一 · 破冰与符号语法</h3><div class="roadmap">' + s1.map(function (l) { return cardHTML(l, nextLesson && nextLesson.id === l.id); }).join('') + '</div></div>' +
       '<div class="block"><h3>阶段二 · 读经解码器</h3><div class="roadmap rm-3">' + s2.map(function (l) { return cardHTML(l, nextLesson && nextLesson.id === l.id); }).join('') + '</div></div>' +
-      '<div class="block"><h3>阶段三 · 实操体验（起卦与解卦）</h3><div class="roadmap rm-2">' +
+      (s3.length ? '<div class="block"><h3>阶段三 · 代表卦精读与哲思</h3><div class="roadmap">' + s3.map(function (l) { return cardHTML(l, nextLesson && nextLesson.id === l.id); }).join('') + '</div></div>' : '') +
+      '<div class="block"><h3>阶段四 · 实操与解惑</h3><div class="roadmap rm-3">' +
         '<a class="rm-card' + (S.levels.l5 ? ' done' : '') + '" href="#l5"><div class="row" style="justify-content:space-between"><span class="rm-tag">起</span>' + (S.levels.l5 ? '<span class="chip g">已体验</span>' : '') + '</div><b>起卦实操</b><span class="small">三不占原则 · 大衍蓍草 · 铜钱 · 数字卦</span></a>' +
-        '<a class="rm-card' + (S.levels.l6 ? ' done' : '') + '" href="#l6"><div class="row" style="justify-content:space-between"><span class="rm-tag">解</span>' + (S.levels.l6 ? '<span class="chip g">已体验</span>' : '') + '</div><b>变爻解卦</b><span class="small">朱熹变爻读法 · 时间阶梯 · 古今案例</span></a>' +
+        '<a class="rm-card' + (S.levels.l6 ? ' done' : '') + '" href="#l6"><div class="row" style="justify-content:space-between"><span class="rm-tag">解</span>' + (S.levels.l6 ? '<span class="chip g">已体验</span>' : '') + '</div><b>变爻解卦与情境工坊</b><span class="small">朱熹变爻 · 同爻异境 · 研易复盘笔记</span></a>' +
+        '<a class="rm-card" href="#qa"><div class="row" style="justify-content:space-between"><span class="rm-tag">问</span><span class="chip">答疑</span></div><b>初学十二问</b><span class="small">经传关系 · 天道吉凶 · 占卦与理性</span></a>' +
       '</div></div>' +
     '</section>' +
     dailySection +
@@ -381,22 +387,33 @@ function tabHand(a) {
 }
 
 // ---- 六：解卦 ----
-var readV = null, caseSel = 'nankuai', caseStep = 0;
+var readV = null, caseSel = 'nankuai', caseStep = 0, ctxIdx = 0, ctxPick = 0, qaCat = 'all', qaOpenMap = { 1: true };
 function textOf(t, r) {
   var b = t.hex === 'ben' ? r.ben : r.zhi, h = Yi.hex(b);
   if (t.type === 'judgment') return { title: h.name + '卦辞', body: h.judgment, gloss: GLOSS[h.kw - 1][0], extra: h.daxiang };
   var l = h.lines[t.i], g = t.i === 6 ? GLOSS[h.kw - 1][2] : GLOSS[h.kw - 1][1][t.i];
   return { title: h.name + ' ' + l.label, body: l.text, gloss: g, extra: h.smallxiang[t.i] };
 }
+function loadValuesToFlow(benName, mvList) {
+  var h = HEX.filter(function (x) { return x.name === benName; })[0];
+  if (!h) return;
+  readV = h.bits.split('').map(function (x, i) { var y = x === '1'; return mvList && mvList.indexOf(i) >= 0 ? (y ? 9 : 6) : (y ? 7 : 8); });
+  drawFlow();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 views.l6 = function () {
   readV = cast().values.slice();
   var c = cast();
   view.innerHTML = '<section class="block"><h1>变爻解卦</h1><p class="lede">点爻改变动爻，规则会自动指出这次该读哪一句（' + Glossary.term('本卦') + '对照' + Glossary.term('之卦') + '）。</p></section>' +
-    '<section class="block"><div class="surface block"><div class="row" style="justify-content:space-between"><div class="small">' + (c.demo ? '示例卦 · 起一卦后这里变成你的' : esc(c.method) + (c.q ? ' · ' + esc(c.q) : '')) + '</div><a href="#l5" class="btn ghost" style="text-decoration:none">重新起卦</a></div><div class="flow" id="flow"></div><div class="chips" id="rule"></div><div id="targets" class="block"></div><div class="row"><span class="small" id="fualt"></span></div></div></section>' +
+    '<section class="block"><div class="surface block"><div class="row" style="justify-content:space-between"><div class="small">' + (c.demo ? '示例卦 · 起一卦后这里变成你的' : esc(c.method) + (c.q ? ' · ' + esc(c.q) : '')) + '</div><a href="#l5" class="btn ghost" style="text-decoration:none">重新起卦</a></div><div class="flow" id="flow"></div><div class="chips" id="rule"></div><div id="targets" class="block"></div><div class="row"><span class="small" id="fualt"></span></div>' +
+    '<details class="why-zhuxi"><summary>为什么朱熹规定“两变取上、四变取下”？</summary><div class="small" style="margin-top:6px">画卦讲究从下往上推进。两爻变时主力还在本卦之内往上走，因此走到更靠上面的那动爻才拍板；四爻及以上大面积变化时，局势重心已跨到之卦，在之卦仅剩的两个不变之爻里自下往上先遇见的下面那爻就是主导（同理，五爻变只看之卦唯一不变的那一爻）。</div></details></div></section>' +
     '<section class="block">' + head('时间感', '从动爻往上数，每爻一个阶段') + '<div class="surface split"><div class="ladder2" id="tl"></div><div class="block"><div class="big" id="tlb"></div><div class="small">单位看事情的周期：可能是天、月或年，要靠生活经验判断。</div></div></div></section>' +
+    '<section class="block">' + head(Glossary.term('同爻异境') + ' · 情境解卦工坊', '同一条爻换了问题与身份，现实应对可以完全相反') + '<div class="surface block" id="ctx-lab"></div></section>' +
     '<section class="block">' + head('把卦放进你的问题') + '<div class="surface block"><textarea id="askq" placeholder="写下问题和背景">' + esc(c.demo ? '' : c.q) + '</textarea><div class="row"><a class="btn" href="#tui" id="askb" style="text-decoration:none">带着问题去六爻推演</a><span class="small">提醒：解卦不脱离具体情境，优先取最合常理的解释</span></div></div></section>' +
+    '<section class="block">' + head(Glossary.term('占卦复盘') + ' · 研易笔记', '记录每次“问什么—怎么解—事后应验”，不用死背就能摸熟规律') + '<div class="surface block" id="cast-journal"></div></section>' +
     '<section class="block">' + head('古今筮例', '点一个例子，一步步揭开') + '<div class="cases" id="cs"></div><div id="cd" class="block"></div></section>' + finishBtn('l6');
-  drawFlow(); drawCases(); bindFinish();
+  drawFlow(); drawCtxLab(); drawJournal(); drawCases(); bindFinish();
+  Glossary.bind(view);
   $('#askq').oninput = function (e) { tui.q = e.target.value; };
 };
 function drawFlow() {
@@ -416,6 +433,104 @@ function drawFlow() {
   var from = r.moving.length === 1 ? r.moving[0] : (r.moving.length ? r.moving[r.moving.length - 1] : 0), n = 6 - from;
   $('#tl').innerHTML = [0, 1, 2, 3, 4, 5].map(function (i) { return '<i class="' + (i >= from ? 'on' : '') + '" style="height:' + (22 + i * 13) + 'px" title="' + POS[i] + '爻"></i>'; }).join('');
   $('#tlb').textContent = (r.moving.length ? POS[from] + '爻起，约 ' + (n - 1 || 1) + ' 个阶段' : '无动爻，看整体形势');
+  var jkey = $('#j-key');
+  if (jkey) {
+    var curKey = readV.join('');
+    jkey.textContent = hexName(r.ben) + (hl.length ? ' · 动 ' + hl.map(function (i) { return label(i, r.ben[i] === '1'); }).join('、') : '（静卦）');
+    jkey.setAttribute('data-k', curKey);
+  }
+}
+function drawCtxLab() {
+  var box = $('#ctx-lab');
+  if (!box || typeof DeepStudy === 'undefined') return;
+  var list = DeepStudy.CONTEXT_CASES;
+  var cur = list[ctxIdx] || list[0];
+  var pick = cur.contexts[ctxPick] || cur.contexts[0];
+  box.innerHTML =
+    '<div class="ctx-tabs">' + list.map(function (c, i) {
+      return '<button type="button" class="chip ctx-case-btn' + (i === ctxIdx ? ' on' : '') + '" data-ci="' + i + '">' + esc(c.title) + '</button>';
+    }).join('') + '</div>' +
+    '<div class="surface-sub block"><div class="row" style="justify-content:space-between"><b>' + esc(cur.quote) + '</b><button type="button" class="btn ghost" id="ctx-load">放进上面的卦盘</button></div>' +
+    '<div class="small">象理背景：' + esc(cur.hint) + '</div>' +
+    '<div class="ctx-tabs">' + cur.contexts.map(function (ct, j) {
+      return '<button type="button" class="chip ctx-pick-btn' + (j === ctxPick ? ' m' : '') + '" data-pi="' + j + '">' + esc(ct.label) + '</button>';
+    }).join('') + '</div>' +
+    '<div><b>实际落点：</b>' + esc(pick.take) + '</div>' +
+    '<div class="small">' + esc(pick.caution) + '</div></div>';
+  $$('#ctx-lab .ctx-case-btn').forEach(function (b) {
+    b.onclick = function () { ctxIdx = +b.getAttribute('data-ci'); ctxPick = 0; drawCtxLab(); };
+  });
+  $$('#ctx-lab .ctx-pick-btn').forEach(function (b) {
+    b.onclick = function () { ctxPick = +b.getAttribute('data-pi'); drawCtxLab(); };
+  });
+  $('#ctx-load').onclick = function () { loadValuesToFlow(cur.ben, cur.mv); };
+}
+function drawJournal() {
+  var box = $('#cast-journal');
+  if (!box) return;
+  var r = Yi.reading(readV), hl = r.moving, key = readV.join('');
+  var saved = S.castLogs[key] || {};
+  var c = cast();
+  var hist = S.history || [];
+  var allKeys = Object.keys(S.castLogs || {});
+  box.innerHTML =
+    '<div class="row" style="justify-content:space-between"><span class="chip on" id="j-key" data-k="' + key + '">' + hexName(r.ben) + (hl.length ? ' · 动 ' + hl.map(function (i) { return label(i, r.ben[i] === '1'); }).join('、') : '（静卦）') + '</span><span class="small">保存于浏览器本地</span></div>' +
+    '<div class="split">' +
+      '<div class="block">' +
+        '<input id="j-q" placeholder="问什么与当下背景（例：年底是否换团队）" value="' + esc(saved.q != null ? saved.q : (c.demo ? '' : c.q)) + '">' +
+        '<textarea id="j-read" placeholder="当时的解读：我最初重点看了哪句，准备怎么做？">' + esc(saved.read || '') + '</textarea>' +
+        '<textarea id="j-verify" placeholder="事后应验/复盘：过了几周或几个月后再回来补充真发生的事">' + esc(saved.verify || '') + '</textarea>' +
+        '<div class="row"><button type="button" class="btn" id="j-save">保存这条复盘</button><span class="small" id="j-fb"></span></div>' +
+      '</div>' +
+      '<div class="block">' +
+        '<b>已保存复盘（' + allKeys.length + '）与最近起卦（' + hist.length + '）</b>' +
+        '<div class="journal-list" id="j-list">' +
+          (allKeys.length === 0 && hist.length === 0 ? '<span class="small">还没有个人记录。先在左侧填几句保存，或去 <a href="#l5">起卦实操</a> 起一卦回来记下。</span>' : '') +
+          allKeys.map(function (k) {
+            var it = S.castLogs[k];
+            return '<button type="button" class="journal-item" data-jk="' + esc(k) + '"><b>' + esc(it.title || k) + '</b><span class="small">' + esc(it.q || '未填问题') + (it.verify ? ' · 已复盘' : '') + '</span></button>';
+          }).join('') +
+          hist.slice(0, 4).map(function (h, hi) {
+            var b = Yi.valuesToBits(h.values);
+            return '<button type="button" class="journal-item" data-hi="' + hi + '"><b>最近起卦 · ' + hexName(b) + '</b><span class="small">' + esc((h.method || '') + (h.q ? ' · ' + h.q : '')) + '</span></button>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  $('#j-save').onclick = function () {
+    var kNow = ($('#j-key') && $('#j-key').getAttribute('data-k')) || readV.join('');
+    var rNow = Yi.reading(readV);
+    S.castLogs[kNow] = {
+      values: readV.slice(),
+      title: hexName(rNow.ben),
+      q: ($('#j-q').value || '').trim(),
+      read: ($('#j-read').value || '').trim(),
+      verify: ($('#j-verify').value || '').trim(),
+      at: Date.now()
+    };
+    save();
+    drawJournal();
+    var fb = $('#j-fb');
+    if (fb) fb.textContent = '✓ 已保存复盘';
+  };
+  $$('#j-list [data-jk]').forEach(function (b) {
+    b.onclick = function () {
+      var item = S.castLogs[b.getAttribute('data-jk')];
+      if (item && Array.isArray(item.values)) {
+        readV = item.values.slice();
+        drawFlow(); drawJournal();
+      }
+    };
+  });
+  $$('#j-list [data-hi]').forEach(function (b) {
+    b.onclick = function () {
+      var h = S.history[+b.getAttribute('data-hi')];
+      if (h && Array.isArray(h.values)) {
+        readV = h.values.slice();
+        drawFlow(); drawJournal();
+      }
+    };
+  });
 }
 function drawCases() {
   $('#cs').innerHTML = CASES.map(function (c) { var h = HEX.filter(function (x) { return x.name === c.ben; })[0]; return '<button type="button" class="case ' + (caseSel === c.id ? 'on' : '') + '" data-c="' + c.id + '">' + gua(h.bits, { size: 'mini', moving: c.mv || [] }) + '<b style="font:900 16px var(--serif)">' + c.ben + '</b><span class="small">' + c.tag + '</span></button>'; }).join('');
@@ -424,7 +539,7 @@ function drawCases() {
   var st = [['他读到', c.read], ['转折', c.turn], ['结局', c.end]];
   $('#cd').innerHTML = '<div class="surface block"><div class="row" style="justify-content:space-between"><div><div class="small">' + c.tag + ' · ' + c.who + '</div><div class="quote">问：' + c.q + '</div></div>' + (c.mv ? '<button type="button" class="btn ghost" id="cl">放进上面的卦盘</button>' : '') + '</div><div class="reveal">' + st.map(function (s, i) { return '<button type="button" class="rstep ' + (i >= caseStep ? 'lock' : '') + '" data-s="' + i + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></button>'; }).join('') + '</div><a class="small" href="' + c.src + '" target="_blank" rel="noopener">查看出处</a></div>';
   $$('#cd .rstep').forEach(function (b) { b.onclick = function () { var i = +b.getAttribute('data-s'); if (i === caseStep) { caseStep++; drawCases(); } }; });
-  var cl = $('#cl'); if (cl) cl.onclick = function () { readV = h.bits.split('').map(function (x, i) { var y = x === '1'; return c.mv.indexOf(i) >= 0 ? (y ? 9 : 6) : (y ? 7 : 8); }); drawFlow(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  var cl = $('#cl'); if (cl) cl.onclick = function () { loadValuesToFlow(c.ben, c.mv); };
 }
 
 // ---- 梅花易数 ----
@@ -917,6 +1032,56 @@ function drawDetail() {
   $('#note').oninput = function (e) { S.notes[h.kw] = e.target.value; save(); };
 }
 
+// ---- 初学十二问 ----
+views.qa = function () {
+  var list = typeof DeepStudy !== 'undefined' ? DeepStudy.QA : [];
+  var filtered = qaCat === 'all' ? list : list.filter(function (x) { return x.cat === qaCat; });
+  var cats = [
+    ['all', '全部（' + list.length + '）'],
+    ['philosophy', '读经与哲学'],
+    ['divination', '占卦与理性'],
+    ['practice', '修身与心态']
+  ];
+  var allOpen = filtered.length > 0 && filtered.every(function (x) { return qaOpenMap[x.n]; });
+  view.innerHTML =
+    '<section class="block"><h1>初学十二问</h1><p class="lede">把读《周易》与学占卦最容易绕弯的十二个真实困惑集中说清。点击条目即可展开结论、原因与对应微课。</p></section>' +
+    '<section class="block"><div class="row" style="justify-content:space-between"><div class="faq-tabs">' +
+    cats.map(function (c) { return '<button type="button" class="chip' + (qaCat === c[0] ? ' on' : '') + '" data-fcat="' + c[0] + '">' + c[1] + '</button>'; }).join('') +
+    '</div><button type="button" class="btn ghost" id="faq-all">' + (allOpen ? '全部收起' : '全部展开') + '</button></div>' +
+    '<div class="faq-list">' + filtered.map(function (item) {
+      var isOpen = !!qaOpenMap[item.n];
+      return '<div class="surface faq-card' + (isOpen ? ' open' : '') + '" data-qn="' + item.n + '">' +
+        '<button type="button" class="faq-head" aria-expanded="' + (isOpen ? 'true' : 'false') + '">' +
+        '<span class="rm-tag">' + (item.n < 10 ? '0' + item.n : item.n) + '</span>' +
+        '<div class="block" style="gap:3px;flex:1;text-align:left"><div class="row" style="gap:6px"><span class="chip">' + esc(item.tag) + '</span></div><b>' + esc(item.q) + '</b></div>' +
+        '<span class="faq-tog">' + (isOpen ? '−' : '+') + '</span></button>' +
+        '<div class="faq-body"' + (isOpen ? '' : ' hidden') + '>' +
+          '<div class="faq-short"><b>核心回答：</b>' + esc(item.short) + '</div>' +
+          '<p>' + esc(item.detail) + '</p>' +
+          '<div class="row"><a class="btn ghost" href="#' + esc(item.link) + '" style="text-decoration:none">前往「' + esc(item.linkNm) + '」延伸阅读 →</a></div>' +
+        '</div></div>';
+    }).join('') + '</div></section>';
+
+  $$('[data-fcat]').forEach(function (b) {
+    b.onclick = function () { qaCat = b.getAttribute('data-fcat'); views.qa(); };
+  });
+  $('#faq-all').onclick = function () {
+    filtered.forEach(function (x) { if (allOpen) delete qaOpenMap[x.n]; else qaOpenMap[x.n] = true; });
+    views.qa();
+  };
+  $$('.faq-card .faq-head').forEach(function (b) {
+    b.onclick = function () {
+      var card = b.closest('.faq-card'), n = +card.getAttribute('data-qn');
+      if (qaOpenMap[n]) delete qaOpenMap[n]; else qaOpenMap[n] = true;
+      var on = !!qaOpenMap[n];
+      card.classList.toggle('open', on);
+      b.setAttribute('aria-expanded', on ? 'true' : 'false');
+      $('.faq-tog', b).textContent = on ? '−' : '+';
+      $('.faq-body', card).hidden = !on;
+    };
+  });
+};
+
 // ---- 五阶渐进分级练习 ----
 var INTERVAL = [0, 1, 3, 7];
 function dayNow() { return Math.floor(Date.now() / 86400000); }
@@ -932,7 +1097,7 @@ var TIERS = [
   { id: 1, nm: '1 阶 · 八卦认形', sub: '认八个单卦 · 口诀 · 乾坤六子 · 手画三画' },
   { id: 2, nm: '2 阶 · 先后天与数', sub: '先天数 1~8 · 对角和 9 · 后天方位季节' },
   { id: 3, nm: '3 阶 · 听名画卦', sub: '15 核心高频卦：先念上再画下 · 综错对' },
-  { id: 4, nm: '4 阶 · 爻名与读辞', sub: '初九六二 · 元亨利贞与无咎 · 当位得中' },
+  { id: 4, nm: '4 阶 · 爻名与代表卦', sub: '初九六二 · 元亨利贞 · 11 锚点代表卦' },
   { id: 5, nm: '5 阶 · 64 卦全库', sub: '朱熹变爻规则 · 全 64 卦盲画 · 盒子间隔记忆' }
 ];
 
@@ -1064,14 +1229,20 @@ function nextQ(tier) {
       for (var k = 0; k < 6; k++) { allLbls.push(label(k, true)); allLbls.push(label(k, false)); }
       choice(gua(h4.bits, { size: 'lg', hot: [li] }) + '<b>蓝线高亮的这一爻（由下往上第 ' + (li + 1) + ' 根）怎么念？</b>', rightLbl, pickFrom(allLbls, 3, rightLbl), '初、上先写位置，二三四五先写九（阳）或六（阴）');
     } else if (type === 1) {
-      var dict4 = [
-        ['《系辞》对“无咎”的真正解释是？', '善于及时补救过失，免于灾祸', ['本来就完美无瑕', '不管怎么走都绝对平安', '必须靠占卜才能化解']],
-        ['经文里出现“贞凶”，最准确的读法是？', '死守原本的路线不知变通，会有凶险', ['守正做好事反而一定倒霉', '占卜结果永远不准', '只能躺平不能行动']],
-        ['“中胜于正”指的是哪两个位置最占优势？', '二爻与五爻（居中位）', ['初爻与上爻', '三爻与四爻', '只有五爻']],
-        ['《文言传》专门解释哪两卦？', '只讲乾、坤两纯卦', ['解释全部 64 卦的文言语法', '只讲六十四卦的排列顺序', '专门记录古人占卜案例']]
-      ];
-      var q4 = dict4[Math.floor(Math.random() * dict4.length)];
-      choice('<div class="big" style="font-size:22px;text-align:center">' + q4[0] + '</div>', q4[1], q4[2]);
+      var aqPool = (typeof DeepStudy !== 'undefined' && DeepStudy.ANCHOR_QUIZ) ? DeepStudy.ANCHOR_QUIZ : [];
+      if (aqPool.length && Math.random() < 0.55) {
+        var aq = aqPool[Math.floor(Math.random() * aqPool.length)];
+        choice('<div class="big" style="font-size:21px;text-align:center">' + esc(aq.q) + '</div>', aq.ans, aq.bad, aq.tip);
+      } else {
+        var dict4 = [
+          ['《系辞》对“无咎”的真正解释是？', '善于及时补救过失，免于灾祸', ['本来就完美无瑕', '不管怎么走都绝对平安', '必须靠占卜才能化解']],
+          ['经文里出现“贞凶”，最准确的读法是？', '死守原本的路线不知变通，会有凶险', ['守正做好事反而一定倒霉', '占卜结果永远不准', '只能躺平不能行动']],
+          ['“中胜于正”指的是哪两个位置最占优势？', '二爻与五爻（居中位）', ['初爻与上爻', '三爻与四爻', '只有五爻']],
+          ['《文言传》专门解释哪两卦？', '只讲乾、坤两纯卦', ['解释全部 64 卦的文言语法', '只讲六十四卦的排列顺序', '专门记录古人占卜案例']]
+        ];
+        var q4 = dict4[Math.floor(Math.random() * dict4.length)];
+        choice('<div class="big" style="font-size:22px;text-align:center">' + q4[0] + '</div>', q4[1], q4[2]);
+      }
     } else if (type === 2) {
       var a4 = Yi.analyze(h4.bits)[li];
       var lbl4 = label(li, h4.bits[li] === '1');
@@ -1122,7 +1293,9 @@ function nav(cur) {
     var isLesson = Lessons.LIST.some(function (x) { return x.id === l.id; }) || PRAC.some(function (x) { return x.id === l.id; });
     return '<a class="step ' + (cur === l.id ? 'on' : '') + '" href="#' + l.id + '"><span class="tag">' + l.tag + '</span><span class="nm">' + (l.short ? l.nm.replace(/^[^·]+·\s*/, '') : l.nm) + '</span>' + (isLesson ? '<span class="dot ' + (S.levels[l.id] ? 'done' : '') + '"></span>' : '<span></span>') + '</a>';
   }
-  $('#ladder').innerHTML = Lessons.LIST.map(step).join('');
+  $('#ladder').innerHTML = Lessons.LIST.filter(function (l) { return l.stage <= 2; }).map(step).join('');
+  var deepEl = $('#deep');
+  if (deepEl) deepEl.innerHTML = Lessons.LIST.filter(function (l) { return l.stage === 3; }).map(step).join('');
   $('#prac').innerHTML = PRAC.map(step).join('');
   $('#tools').innerHTML = TOOLS.map(step).join('');
   $('#adv').innerHTML = ADV.map(step).join('');
@@ -1130,7 +1303,7 @@ function nav(cur) {
   if (advBox && ADV.some(function (a) { return a.id === cur; })) advBox.open = true;
   $$('[data-qnav]').forEach(function (a) {
     var q = a.getAttribute('data-qnav');
-    var active = q === cur || (q === 'home' && /^c\d$/.test(cur));
+    var active = q === cur || (q === 'home' && /^c\d+$/.test(cur));
     a.classList.toggle('on', active);
   });
 }

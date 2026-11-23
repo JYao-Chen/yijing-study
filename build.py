@@ -13,6 +13,7 @@ for key, val in [
     ("/*GLOSS*/", rd("src/gloss.js")),
     ("/*GLOSSARY*/", rd("src/glossary.js")),
     ("/*LESSONS*/", rd("src/lessons.js")),
+    ("/*DEEP*/", rd("src/deep.js")),
     ("/*APP*/", rd("src/app.js"))
 ]:
     html = html.replace(key, val)

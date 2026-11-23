@@ -85,7 +85,7 @@ button.ln{width:100%}button.ln:hover i{background:var(--accent)}
 .tip-box{border-left:3px solid var(--move);background:color-mix(in oklab,var(--move) 11%,var(--card));border-radius:0 6px 6px 0;padding:10px 14px;display:flex;flex-direction:column;gap:4px;font-size:14px}
 .tip-box b{color:var(--ink)}
 .mcheck{background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
-.mcheck .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.mcheck .opts,.mopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
 .mopt,.mopt2{text-align:left;padding:9px 12px;border-radius:6px;background:var(--well);font-size:14px;border:1px solid transparent;transition:background .15s}
 .mopt:hover,.mopt2:hover{border-color:var(--accent)}
 .mopt.pick-y,.mopt2.pick-y{background:var(--good);color:var(--on)}
@@ -324,4 +324,28 @@ details{border-top:1px solid var(--line);padding-top:8px}summary{cursor:pointer;
 .qa.busy .qthink::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:2px;animation:pulse 1s infinite}
 .qreason{line-height:1.6}.caret{display:inline-block;width:2px;height:1em;background:var(--accent);vertical-align:-2px;margin-left:2px;animation:pulse .8s infinite}
 .qclar{color:var(--move)}
+/* 二期：精读微课、情境工坊与初学十二问 */
+.deep-tabs,.dragon-track,.ctx-tabs,.faq-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.nine-grid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
+.nine-card{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:6px;background:var(--well);border:1px solid transparent;text-align:center;transition:border-color .15s,background .15s}
+.nine-card b{font:900 18px var(--serif)}
+.nine-card:hover{border-color:var(--accent)}
+.nine-card.on{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.nine-card.on .small{color:var(--on);opacity:.9}
+.why-zhuxi{border-top:1px dashed var(--line);padding-top:8px}
+.journal-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
+.journal-item{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:6px;background:var(--well);border:1px solid transparent;text-align:left}
+.journal-item:hover{border-color:var(--accent)}
+.faq-list{display:flex;flex-direction:column;gap:10px}
+.faq-card{padding:0;overflow:hidden}
+.faq-head{width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;text-align:left}
+.faq-head:hover{background:color-mix(in oklab,var(--well) 60%,var(--card))}
+.faq-tog{font:700 20px/1 var(--sans);color:var(--accent);flex:none;width:24px;text-align:center}
+.faq-body{padding:0 16px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;padding-top:12px}
+.faq-short{padding:8px 12px;border-radius:6px;background:var(--well)}
+@media (max-width:820px){
+  .nine-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .faq-head{padding:10px 12px;gap:10px}
+  .faq-body{padding:10px 12px 12px}
+}
 @media (prefers-reduced-motion:reduce){.caret,.qa.busy .qthink::before{animation:none}.cand,.cbar b{transition:none}}

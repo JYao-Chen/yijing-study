@@ -4,9 +4,9 @@ from playwright.sync_api import sync_playwright
 
 html, out = sys.argv[1], pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 errs = []
-VIEWS = "home c0 c1 c2 c3 c4 c5 c6 l1 l2 l3 l4 l5 l6 mh nj tui dict drill".split()
-SHOT_D = set("home c0 c1 c2 c3 c4 c5 c6 l6 nj tui drill".split())
-SHOT_M = set("home c1 tui".split())
+VIEWS = "home c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 l1 l2 l3 l4 l5 l6 mh nj tui dict qa drill".split()
+SHOT_D = set("home c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 l6 nj tui qa drill".split())
+SHOT_M = set("home c1 c7 qa tui".split())
 
 def check_overflow(pg, name, tag):
     w = pg.evaluate("[document.documentElement.scrollWidth,innerWidth]")
@@ -100,6 +100,27 @@ with sync_playwright() as p:
                 pg.click("#lnext"); pg.wait_for_timeout(100)
                 pg.click("#dq button.ln"); pg.click("#dc"); pg.click("#dn"); pg.wait_for_timeout(80)
 
+            if v == "c7":
+                pg.click('.dragon-track [data-di="5"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('#kun-tabs [data-ki="1"]'); pg.click('.mcheck .mopt[data-ok="1"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('.qian-btns [data-qi="2"]'); pg.click('.mcheck .mopt[data-ok="1"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('.sc-match[data-si="0"] .sm-opt[data-pick="乾"]'); pg.wait_for_timeout(80)
+
+            if v == "c8":
+                pg.click('#h4-tabs [data-hi="2"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('.hq-item[data-qi="0"] .hq-opt[data-kw="3"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('.turn-btns [data-ti="3"]'); pg.click('.mcheck .mopt[data-ok="1"]'); pg.wait_for_timeout(80)
+
+            if v == "c9":
+                pg.click('#s4-tabs [data-si="2"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('#nine-grid [data-ni="1"]'); pg.click('.mcheck .mopt[data-ok="1"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                check_overflow(pg, name, "c9-end")
+
+            if v == "c10":
+                pg.click('.mode-compare [data-mc="1"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('.phil-tabs [data-pi="1"]'); pg.click("#lnext"); pg.wait_for_timeout(100)
+                pg.click('.mcheck .mopt[data-ok="1"]'); pg.wait_for_timeout(80)
+
             if v == "l5":
                 pg.click("#fin"); pg.wait_for_timeout(300)
                 for t in ["coin", "num", "time", "hand", "dayan"]:
@@ -110,7 +131,17 @@ with sync_playwright() as p:
                 pg.click("#nx"); pg.click("#nx"); pg.click("#nx"); pg.click("#nx"); pg.click("#nx"); pg.wait_for_timeout(120)
 
             if v == "l6":
-                pg.click('#flow button.ln[data-i="3"]'); pg.click('#flow button.ln[data-i="5"]'); pg.click('[data-c="mujiang"]'); pg.click('.rstep[data-s="1"]'); pg.click("#cl")
+                pg.click('#flow button.ln[data-i="3"]'); pg.click('#flow button.ln[data-i="5"]')
+                pg.click('#ctx-lab .ctx-case-btn[data-ci="1"]'); pg.click('#ctx-lab .ctx-pick-btn[data-pi="1"]'); pg.click("#ctx-load"); pg.wait_for_timeout(80)
+                pg.fill("#j-q", "测试情境"); pg.fill("#j-read", "重点看九四解而拇"); pg.click("#j-save"); pg.wait_for_timeout(80)
+                if "测试情境" not in pg.inner_text("#j-list"): errs.append((name, v, "journal-not-saved"))
+                pg.click('[data-c="mujiang"]'); pg.click('.rstep[data-s="1"]'); pg.click("#cl")
+
+            if v == "qa":
+                pg.click('[data-fcat="divination"]'); pg.wait_for_timeout(80)
+                check_overflow(pg, name, "qa-filter")
+                pg.click('[data-fcat="all"]'); pg.click(".faq-card[data-qn='7'] .faq-head"); pg.wait_for_timeout(80)
+                if not pg.query_selector(".faq-card[data-qn='7'].open"): errs.append((name, v, "qa-not-opened"))
 
             if v == "nj":
                 for _ in range(3): pg.click("#snext")
