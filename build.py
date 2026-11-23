@@ -6,8 +6,15 @@ def rd(p): return open(os.path.join(R, p), encoding="utf8").read()
 data = dict(simp=json.loads(rd("data/hexagrams.simp.json")), trad=json.loads(rd("data/hexagrams.trad.json")),
             lunar=json.loads(rd("data/lunar.json")), fu=json.loads(rd("data/fu_index.json")))
 html = rd("src/index.tpl.html")
-for key, val in [("/*STYLE*/", rd("src/style.css")), ("/*DATA*/", "var DATA=" + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";"),
-                 ("/*ENGINE*/", rd("src/engine.js") + "\n" + rd("src/infer.js")), ("/*GLOSS*/", rd("src/gloss.js")), ("/*APP*/", rd("src/app.js"))]:
+for key, val in [
+    ("/*STYLE*/", rd("src/style.css")),
+    ("/*DATA*/", "var DATA=" + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";"),
+    ("/*ENGINE*/", rd("src/engine.js") + "\n" + rd("src/infer.js")),
+    ("/*GLOSS*/", rd("src/gloss.js")),
+    ("/*GLOSSARY*/", rd("src/glossary.js")),
+    ("/*LESSONS*/", rd("src/lessons.js")),
+    ("/*APP*/", rd("src/app.js"))
+]:
     html = html.replace(key, val)
 os.makedirs(os.path.join(R, "build"), exist_ok=True)
 open(os.path.join(R, "build/index.html"), "w", encoding="utf8").write(html)

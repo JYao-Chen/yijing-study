@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # 整套验证（Linux，需 node 22、uv、python3）：安装依赖、构建、接口测试（假模型）、引擎与规则测试、页面冒烟。
 set -euo pipefail
-[ -s ~/.nvm/nvm.sh ] && source ~/.nvm/nvm.sh >/dev/null
+if ! command -v node >/dev/null 2>&1 && [ -s ~/.nvm/nvm.sh ]; then
+  source ~/.nvm/nvm.sh --no-use >/dev/null
+  nvm use 22 >/dev/null 2>&1 || nvm use default >/dev/null 2>&1 || true
+fi
 OUT=${VERIFY_OUT:-$PWD/.verify}; mkdir -p "$OUT"
 npm install --no-audit --no-fund
 cp package-lock.json "$OUT/"
